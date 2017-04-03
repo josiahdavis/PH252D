@@ -1,0 +1,36 @@
+---
+title: ''
+author: "Josiah Davis"
+date: "4/3/2017"
+output: html_document
+---
+
+#### Your question in words
+
+The main question we are trying to answer is: does salary has an affect on whether an employee leaves a company?
+
+We are also interested in exploring whether the following variables have an affect on whether an employee leaves the company?
+
+- average_monthly_hours (e.g., burnout)
+- satisfaction_level (e.g., do actions line up with self-perception of values)
+- last_evaluation
+
+#### Your target causal parameter
+
+Average treatmen effect of 
+
+#### A brief description of the data you will work with, including key variables available,
+
+From Kaggle
+
+#### Any anticipated challenges and how you will address them.
+
+1. Deciding on how to simplify the D.A.G.
+
+Directions of arrows and grouping
+
+2. Which libraries to use in superlearner
+
+3. Identifiability
+
+e.g., Indpnce and exlcision restirct
