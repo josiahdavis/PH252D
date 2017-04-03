@@ -1,0 +1,59 @@
+---
+title: "Final Project"
+author: "Stat 135"
+date: "April 3, 2017"
+output: pdf_document
+---
+
+```{r}
+
+library(SuperLearner)
+
+data <- read.table("HR_comma_sep.csv", sep = ",", header = TRUE)
+head(data)
+names(data)
+n <- nrow(data)
+n
+
+# transform sales to numeric
+sales <- factor(data$sales)
+nlevels(sales)
+sales <- as.numeric(factor(sales, labels = 1:nlevels(sales)))
+summary(sales)
+
+# transform salary to numeric
+salary <- factor(data$salary)
+nlevels(salary)
+salary <- as.numeric(factor(salary, labels = 1:nlevels(salary)))
+summary(salary)
+
+# transform data to contain sales and salary as numeric
+data <- subset(data, select = c(-sales, -salary))
+head(data)
+data <- data.frame(data, sales = sales, salary = salary)
+summary(data)
+
+SL.library<- c("SL.randomForest", 
+               "SL.step",
+               "SL.stepAIC",
+               "SL.glmnet",
+               "SL.step.forward",
+               "SL.glm")
+
+# remove the outcome variable "left"
+X <- subset(data, select = -left)
+
+# run superlearner
+SL.out <- SuperLearner(Y = data$left, X = X, SL.library = SL.library, family = "binomial",
+                       cvControl=list(V=10))
+
+# evaluate superlearner
+CV.SL.out<- CV.SuperLearner(Y = data$left, X = X, SL.library=SL.library, family='binomial',
+                              innerCvControl=list(V=10), cvControl=list(V=10))
+
+summary(CV.SL.out)
+
+CV.SL.out$AllSL
+
+```
+
