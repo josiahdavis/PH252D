@@ -1,0 +1,218 @@
+---
+title: "Final Project Dagitty Rough Draft"
+author: "Daniel Lee"
+date: "April 6, 2017"
+output: pdf_document
+---
+
+##Causal Relationship between Salary and Whether a Person Leaves the Job or Not
+
+Exposure variable $A$ is salary.
+Outcome variable $Y$ is whether the person left the job or not.
+Baseline covarates $W$ includes the following:
+
+* work accident
+* promotion
+* last evaluation
+* satisfaction
+* department
+* number of projects
+* average monthly hours
+* time spent at the company  
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+library(dagitty)
+
+salary <- dagitty("dag { 
+A <- U1 -> W <- U2 -> Y
+A <- W -> Y
+A <- U3 -> Y
+A -> Y
+}")
+coordinates(salary) <- list(x=c(A=1,U3=2,Y=3,U1=1,U2=3,W=2),
+                            y=c(A=0,U3=1,Y=0,U1=-1.25,U2=-1.25,W=-1))
+exposures(salary) <- "A"
+outcomes(salary) <- "Y"
+plot(salary)
+
+adjustmentSets(salary, effect = "direct")
+
+```
+
+To be able to identify the effect of salary on whether a person leaves the job or not, we make the following independence assumptions and condition on $W$:
+
+$U_{A} \perp U_{Y}$, $U_{W} \perp U_{Y}$
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+salary_adjusted <- dagitty("dag { 
+A <- U1 -> W
+A <- W -> Y
+A -> Y
+U_Y -> Y
+}")
+coordinates(salary_adjusted) <- list(x=c(A=1,Y=3,U1=0.75,W=2, U_Y = 4),
+                                     y=c(A=0,Y=0,U1=-0.25,W=-0.5, U_Y = 0))
+plot(salary_adjusted)
+
+```
+
+\pagebreak
+
+##Causal Relationship between Average Monthly Hours and Whether a Person Leaves the Job or Not
+
+Exposure variable $A$ is average monthly hours a person works.
+Outcome variable $Y$ is whether the person left the job or not.
+Baseline covarates $W$ includes the following:
+
+* work accident
+* promotion
+* last evaluation
+* satisfaction
+* department
+* number of projects
+* time spent at the company 
+* salary  
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+average_monthly_hours <- dagitty("dag { 
+A <- U1 -> W <- U2 -> Y
+A <- W -> Y
+A <- U3 -> Y
+A -> Y
+}")
+coordinates(average_monthly_hours) <- list(x=c(A=1,U3=2,Y=3,U1=1,U2=3,W=2),
+                            y=c(A=0,U3=1,Y=0,U1=-1.25,U2=-1.25,W=-1))
+exposures(average_monthly_hours) <- "A"
+outcomes(average_monthly_hours) <- "Y"
+plot(average_monthly_hours)
+
+adjustmentSets(average_monthly_hours, effect = "direct")
+
+```
+
+To be able to identify the effect of average monthly hours a person works on whether a person leaves the job or not, we make the following independence assumptions and condition on $W$:
+
+$U_{A} \perp U_{Y}$, $U_{W} \perp U_{Y}$
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+average_monthly_hours_adjusted <- dagitty("dag { 
+A <- U1 -> W
+A <- W -> Y
+A -> Y
+U_Y -> Y
+}")
+coordinates(average_monthly_hours_adjusted) <- list(x=c(A=1,Y=3,U1=0.75,W=2, U_Y = 4),
+                                     y=c(A=0,Y=0,U1=-0.25,W=-0.5, U_Y = 0))
+plot(average_monthly_hours_adjusted)
+
+```
+
+\pagebreak
+
+##Causal Relationship between Job Satisfaction Level and Whether a Person Leaves the Job or Not
+
+Exposure variable $A$ is job satisfaction level.
+Outcome variable $Y$ is whether the person left the job or not.
+Baseline covarates $W$ includes the following:
+
+* work accident
+* promotion
+* last evaluation
+* salary
+* department
+* number of projects
+* average monthly hours
+* time spent at the company  
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+satisfaction_level <- dagitty("dag { 
+A <- U1 -> W <- U2 -> Y
+A <- W -> Y
+A <- U3 -> Y
+A -> Y
+}")
+coordinates(satisfaction_level) <- list(x=c(A=1,U3=2,Y=3,U1=1,U2=3,W=2),
+                            y=c(A=0,U3=1,Y=0,U1=-1.25,U2=-1.25,W=-1))
+exposures(satisfaction_level) <- "A"
+outcomes(satisfaction_level) <- "Y"
+plot(satisfaction_level)
+
+adjustmentSets(satisfaction_level, effect = "direct")
+
+```
+
+To be able to identify the effect of job satisfaction level on whether a person leaves the job or not, we make the following independence assumptions and condition on $W$:
+
+$U_{A} \perp U_{Y}$, $U_{W} \perp U_{Y}$
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+satisfaction_level_adjusted <- dagitty("dag { 
+A <- U1 -> W
+A <- W -> Y
+A -> Y
+U_Y -> Y
+}")
+coordinates(satisfaction_level_adjusted) <- list(x=c(A=1,Y=3,U1=0.75,W=2, U_Y = 4),
+                                     y=c(A=0,Y=0,U1=-0.25,W=-0.5, U_Y = 0))
+plot(satisfaction_level_adjusted)
+
+```
+
+\pagebreak
+
+##Causal Relationship between Performance Evaluation and Whether a Person Leaves the Job or Not
+
+Exposure variable $A$ is the last performance evaluation the person received at the job.
+Outcome variable $Y$ is whether the person left the job or not.
+Baseline covarates $W$ includes the following:
+
+* work accident
+* promotion
+* salary
+* satisfaction
+* department
+* number of projects
+* average monthly hours
+* time spent at the company  
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+last_evaluation <- dagitty("dag { 
+A <- U1 -> W <- U2 -> Y
+A <- W -> Y
+A <- U3 -> Y
+A -> Y
+}")
+coordinates(last_evaluation) <- list(x=c(A=1,U3=2,Y=3,U1=1,U2=3,W=2),
+                            y=c(A=0,U3=1,Y=0,U1=-1.25,U2=-1.25,W=-1))
+exposures(last_evaluation) <- "A"
+outcomes(last_evaluation) <- "Y"
+plot(last_evaluation)
+
+adjustmentSets(last_evaluation, effect = "direct")
+
+```
+
+To be able to identify the effect of last evaluation on whether a person leaves the job or not, we make the following independence assumptions and condition on $W$:
+
+$U_{A} \perp U_{Y}$, $U_{W} \perp U_{Y}$
+
+```{r , fig.height = 3, fig.width = 3, fig.align = "center"}
+
+last_evaluation_adjusted <- dagitty("dag { 
+A <- U1 -> W
+A <- W -> Y
+A -> Y
+U_Y -> Y
+}")
+coordinates(last_evaluation_adjusted) <- list(x=c(A=1,Y=3,U1=0.75,W=2, U_Y = 4),
+                                     y=c(A=0,Y=0,U1=-0.25,W=-0.5, U_Y = 0))
+plot(last_evaluation_adjusted)
+
+```
