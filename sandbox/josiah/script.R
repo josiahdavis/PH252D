@@ -1,30 +1,51 @@
 library(dplyr)
-DIR <- '/Users/josiahdavis/Documents/Berkeley/PH252D/data/'
+DIR <- '/Users/josiahdavis/Documents/Berkeley/PH252D/data/' # <-- UPDATE AS NEEDED
 d <- read.csv(paste0(DIR, 'HR_comma_sep_2.csv'))
-head(d)
-summary(d)
 
-# Target Causal Parameter: Does making more money make you less likely to leave your job?
-# Do people value money more than they think they do? Not sure how I would answer this yet.
-# e.g., satisfaction level is what they tell themselves. leaving is what they do.
+# Number of people --------------------------------------
+n_tot <- d %>% 
+  filter(salary != 'medium') %>% 
+  summarize(people = n())
+n_tot
+
+# Number of people in each treatment --------------------------------------
+n_treat <- d %>% 
+  filter(salary != 'medium') %>% 
+  group_by(salary) %>% 
+  summarize(people = n())
+n_treat
+
+# Number of people in each treatment and strata --------------------------------------
+n_strata <- d %>% 
+  filter(salary != 'medium') %>%
+  mutate(
+    # Create binary variables based on median value of continuous variables
+    time_spend_company_b = time_spend_company > 3
+    , number_project_b = number_project > 4
+    , average_montly_hours_b = average_montly_hours > 200
+  ) %>% 
+  group_by(
+    promotion_last_5years
+    , number_project_b
+    , Work_accident
+    , time_spend_company_b
+    , average_montly_hours_b
+    , sales
+  ) %>%
+  summarize(
+    sal_h = sum(salary == 'high'), 
+    sal_l = sum(salary == 'low'), 
+    class_size = n()
+  )
+n_strata
 
 
-# A: salary
-# Y: left
-
-# W
-# W1: satisfaction_level
-# W2: last_evaluation
-# W3: number_project
-# W4: average_monthly_hours
-# W5: time_spend_company
-# W6: Work_accident
-# W7: promotion_last_5years
-# W8: promotion_last_5years
-
-library(dplyr)
-DIR <- '/Users/josiahdavis/Documents/Berkeley/PH252D/data/'
-# d <- read.csv(paste0(DIR, 'HR_comma_sep_2.csv'))
-# head(d)
-# summary(d)
-
+# Number of people with a positivity violation --------------------------------------
+n_pos_viol <- n_strata %>% 
+  ungroup() %>% 
+  filter(sal_h == 0 | sal_l == 0) %>% 
+  summarize(
+    tot = sum(sal_h) + sum(sal_l),
+    tot_pct = (sum(sal_h) + sum(sal_l)) / n_tot[1,1]
+  )
+n_pos_viol
