@@ -97,7 +97,7 @@ d <- get_data(DIR)
 
 # Data Description
 
-There are eight covariates $W$ in the data which are discussed and visualized below. The goal of this document is to select the number of buckets $k$ to use for approximating the quantitative variables contained in $W$. The objective is to maximize the amount of information contained in the approximated variables while removing a minimal amount of observations due to violations of the positivity assumption.
+There are eight covariates $W$ in the data which are discussed. The goal of this document is to select the number of buckets $k$ to use for approximating the quantitative variables in $W$. The objective is to maximize the amount of information contained in the approximated variables while removing a minimal amount of observations due to violations of the positivity assumption.
 
 * `satisfaction_level`
 * `last_evaluation`
@@ -120,30 +120,34 @@ de <- melt(d, id.vars = c('subject', 'salary')
                               , 'promotion_last_5years', 'sales_int'))
 ggplot(de, aes(x = value, fill = salary)) + 
   geom_histogram() + 
-  labs(title = 'Observed Data Distribution of W and A') + 
+  labs(title = 'Observed Data Distribution of W and A', x = '', y = 'Count of Observations') + 
   facet_wrap(~variable, scales = 'free')
 ```
 
 **Observations**   
+
 * Promotions as well as work accidents are rare at this company.  
 * Some quantitative variables are discrete (e.g., `number_project`) and some are continuous (e.g., `satisfaction_level`)
 
 \newpage
 # Approach
 
-There are three continuous quantitative variables. Quantiles are used to split the variables into buckets of $k = 2, 3, ... , 10$.  
-* `satisfaction_level`  
+There are three continuous quantitative variables. Quantiles are used to approximate the variables using buckets of size $k = 2, 3, ... , 10$: 
+
+* `satisfaction_level`
 * `last_evaluation ` 
 * `average_montly_hours`  
 
-There are two discrete quantitative variables. Quantiles are used to split them into buckets of $k = 2, 3$.  
+There are two discrete quantitative variables. Quantiles are used to approximate the variables using buckets of size $k = 2, 3$:
+
 * `number_project` 
 * `time_spend_company`  
 
-There are three variables that are not quantitative This because they are already binary or becuase they have no natural ordering:  
-* `Work_accident`  
-* `promotion_last_5years`  
-* `sales`  
+There are three variables that are not approximated. This because they are already binary or becuase they have no natural ordering: 
+
+* `Work_accident` 
+* `promotion_last_5years` 
+* `sales` 
 
 The Percentage of observations that are dropped are calculated for each value fo $k$ for each of the variables.
 
@@ -163,8 +167,9 @@ visualize(results)
 ```
 
 **Observations**  
-* Approximately 10% of the observations are lost if using dichotomous approximations for all quantitative variables  
-* Approximately 33% of the observations are lost if using trichotomous approximations for all continuous variables and dichotomous approximations for quantitative discrete variables  
+
+* Approximately 10% of the observations are lost if using dichotomous approximations for all quantitative variables 
+* Approximately 33% of the observations are lost if using trichotomous approximations for all continuous variables and dichotomous approximations for quantitative discrete variables 
 * Approximately 45% of the observations are lost if using trichotomous approximations for all quantitative variables
 
 # Conclusion
