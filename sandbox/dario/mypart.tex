@@ -1,0 +1,112 @@
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+
+%%% Insert double spacing, because Mr. Brillinger wanted it
+\usepackage{setspace}
+\doublespacing
+
+
+\usepackage{cite}
+
+%%% END Article customizations
+
+
+
+%%% The "real" document content comes below...
+
+\title{252D Final Project\\
+\large t}
+\author{Dario Cantore,  Calvin Chi, Josiah Davis, Daniel Lee}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+\begin{document}
+
+
+\centerline{\textbf{252D - My Part}}
+\begin{enumerate}
+\item Doing the dag\\
+Before analyzing our directed acyclic graph we thought it appropriate to describe the thought process that led us to it. We started out with a complete graph with edges between all nodes, where each node is a separate variable. The variables in our dataset were: 
+\begin{itemize} 
+\item  the employee satisfaction level (satisfaction) 
+\item  the score on the employee's last (most recent) evaluation (last\_evaluation or evaluation) 
+\item  the number of projects an employee has completed while at the company (\#projects) 
+\item  the average monthly hours (avg\_monthly\_hours or hours) 
+\item  the time an employee has spent at the company (time\_spend\_company) 
+\item  whether the employee had a work accident or not (work\_accident or accident) 
+\item  whether the employee was promoted in the last 5 years (promotion) 
+\item  the employee's department (department) 
+\item  the employee's salary (salary) 
+\item  whether the employee left (left).
+\end{itemize}
+ In the original graph we could identify 4 exclusion restrictions: Between department and promotion, between accident and promotion, between salary and accident and between Department and last evaluation. Except for these four edges our initial graph would still be fully connected. However, we soon stumbled on other difficulties. For example, we found reason for an edge between avg\_monthly\_hours and work\_accident (working more hours could potentially increase the risk of a work accident) but also the other way around (after an accident people might work less). We therefore decided that we do not want to assume directionality between these two nodes, so we decided to combine them. It is important to note that we did not combine them because we knew that the interaction is bidirectional, we did so because we could not exclude the possibility that it is. We stumbled upon the same problem when looking at the nodes \#projects and average\_monthly\_hours. Both could potentially influence each other. Because we already combined work\_accident and avg\_monthly\_hours, we now had to combine all three of those variables. Because of the way \#projects is defined (number of projects completed while in company) it might be influenced by time\_spend\_in\_company (someone who has been at the company for a longer time might have been able to complete more projects). However, the time spent in the company is probably influenced by whether someone had a work accident. Because work\_accident and \#projects have been combined to a node, there would now be an arrow between time\_spend\_in\_company and the combined node, and between the combined node and time\_spend\_in\_company. The resulting graph would therefore not be aciclyc anymore, and we had to combine the already combined node and time\_spend\_in\_company.  The same logic applied for the variable promotion. Additionally, we felt that we should also combine the varibales last\_evaluation and satisfaction, again because we could not say for sure that the edge connecting the two would be one directional. So, our "true" causal graph consisted of a combined node promotion\_projects\_accidents\_timeInCompany\_avgHours (from now on referred to as PPATH), of the evaluation\_satisfaction node, of the department node, as well as the salary and left node. We furthermore decided that the department might influence for example the avg\_monthly\_hours, but not the other way around and that the department might influence the employee's satisfaction (CHECK THIS WITH OTHERS! DIRECT INFLUENCE?!?) the salary, and whether someone leaves. Whether someone leaves is in turn also affected by salary, the department and the combined node PPATH. We also decided that at least in the initial, "true" causal graph no independence assumptions were warranted.\\ 
+We were aware of the fact that drawing a "W-A-Y" DAG might have saved us a lot of work and contain our graph as a special case, but decided that the exercise would proof its worth later in the roadmap. \\
+
+\item
+The scientific question we want to answer is whether an increase in salary leads to a change in the average probability of leaving (check if everyone agrees with this phrasing).  Specifically, because salary has 3 levels "low", "medium" and "high" we  first concentrate on the effect an increase from "low" to "high" salary has. EDIT THIS IF WE DO MORE!\\
+
+\item
+We will refer to "department" as "D", "evaluation\_satisfaction" as "EA", "left" as "L", "salary" as "A" and "promotion\_projects\_accidents\_time\_hours" as before (PPATH)\\
+The structural equations that follow from this are:
+\begin{align*}
+f_{D} =& f(U_{D,ES}, U_{D,PPATH}, U_{D,A}, U_{D,L})\\
+f_{PPATH} =& f(D,U_{D,PPATH}, U_{A,PPATH}, U_{ES, PPATH}, U_{L,PPATH})\\
+f_{A} =& f(PPATH, D, U_{A,D}, U_{A,PPATH}, U_{A,L}, U_{A,ES})\\
+f_{ES} =& f(PPATH, D, A, U_{A,ES}, U_{D,ES}, U_{PPATH,ES}, U_{L,ES})\\
+f_{L} =& f(PPATH, D, A, U_{D,L}, U_{A,L}, U_{PPATH,L},U_{ES,L})\\
+\end{align*}
+
+
+\item Defining target causal parameter
+We define our target causal parameter $\Psi^F(P_{U,X})$ (CHECK THIS! DEFINE X AND U!)\\
+ $\Psi^F(P_{U,X}) = E_{U,X}(Y_{high} - Y_{low})$, where $Y_{salaryLevel}$ are counterfactual outcomes for salary level "salaryLevel".\\
+
+\end{enumerate}
+\end{document}

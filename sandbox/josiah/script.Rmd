@@ -2,6 +2,27 @@
 
 #### 1. Specify Causal Model representing real background knowledge
 
+**Option 1: Complicated**
+
+- Target: $Y$ = did the employee leave? (i.e., 1 or 0 in the data)
+- Treatment: $A$ = salary (i.e., high/medium/low in the data)
+- Endogenous nodes
+$$\begin{aligned}
+W_1& = satisfaction\_level\\
+W_2& = last\_evaluation\\
+W_3& = number\_project\\
+W_4& = average\_monthly\_hours\\
+W_5& = time\_spend\_company\\
+W_6& = work\_accident\\
+W_7& = promotion\_last\_5years\\
+W_8& = sales
+\end{aligned}$$
+
+This gives us the following model
+
+
+**Option 2: Simplified**
+
 - Target: $Y$ = did the employee leave? (i.e., 1 or 0 in the data)
 - Treatment: $A$ = salary (i.e., high/medium/low in the data)
 - Endogenous nodes: $W = (W_1, W_2, W_3, W_4, W_5, W_6, W_7, W_8)$, where
@@ -24,10 +45,10 @@ P_U$
 
 $$\begin{aligned} 
 W&=f_{W}(U_{W}) \\ 
-A&=f_{A}(W_1, W_2, U_A) \\ 
+A&=f_{A}(W, U_A) \\ 
 Y&=f_{Y}(W_1, W_2, A, U_Y) \end{aligned}$$ 
 
-![](unrestricted.png)
+![](unrestricted2.png)
 
 ``` U_W_left 1 @0.759,0.236 U_salary_W 1 @0.196,0.263 U_salary_left 1
 @0.474,0.850 W 1 @0.472,0.358 left O @0.683,0.606 salary E @0.265,0.600
@@ -45,8 +66,7 @@ Does making more money make you less likely to leave your job? This is the causa
 
 #### 4. Identify : Knowledge + data sufficient? 
 
-##### 5. Commit to an estmand as close to queston as possible, and a statistical model representing 
-real knowledge. 
+##### 5. Commit to an estmand as close to queston as possible, and a statistical model representing
 
 #### 6. Estimate 
 

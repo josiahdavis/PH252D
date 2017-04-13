@@ -15,7 +15,7 @@ n_treat <- d %>%
   summarize(people = n())
 n_treat
 
-# Number of people in each treatment and strata --------------------------------------
+# Number of people in each treatment and strata ----------------------------
 n_strata <- d %>% 
   filter(salary != 'medium') %>%
   mutate(
@@ -40,7 +40,7 @@ n_strata <- d %>%
 n_strata
 
 
-# Number of people with a positivity violation --------------------------------------
+# Number of people with a positivity violation ------------------------------
 n_pos_viol <- n_strata %>% 
   ungroup() %>% 
   filter(sal_h == 0 | sal_l == 0) %>% 
@@ -49,3 +49,12 @@ n_pos_viol <- n_strata %>%
     tot_pct = (sum(sal_h) + sum(sal_l)) / n_tot[1,1]
   )
 n_pos_viol
+
+# Evaluating the Positivity Assumption ------------------------------------
+
+# Question: How many people drop out with different cuts? 
+
+
+# Which libraries to include in Super Learner? ----------------------------
+
+
