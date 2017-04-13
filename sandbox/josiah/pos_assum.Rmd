@@ -2,7 +2,7 @@
 title: "Positivity Assumption Evaluation"
 author: "Josiah Davis"
 date: "4/12/2017"
-output: html_document
+output: pdf_document
 ---
 
 ## Approach
