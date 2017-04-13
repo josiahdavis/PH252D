@@ -5,36 +5,10 @@ date: "4/12/2017"
 output: pdf_document
 ---
 
-## Approach
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
 
-The goal of this document is to select the number of splits to use for the continuous variables contained in $W$ with the objective of removing a minimal amount of observations due to violations of the positivity assumption. There are eight covariates $W$ in the data which are discussed.
-
-1. satisfaction_level
-2. last_evaluation
-3. number_project
-4. average_montly_hours
-5. time_spend_company
-6. Work_accident
-7. promotion_last_5years
-8. sales
-
-There are three continuous numeric variables. Quantiles are used to split the variables into buckets of size $k = 2, 3, ... , 10$.  
-1. satisfaction_level  
-2. last_evaluation  
-4. average_montly_hours  
-
-There are two discrete numeric variables. Quantiles are used to split them into buckets of $k = 2, 3$.  
-3. number_project  
-5. time_spend_company  
-
-There are three variables that are not transformed. This because they are already binary or becuase they have no natural ordering:  
-6. Work_accident  
-7. promotion_last_5years  
-8. sales  
-
-## Define functions
-
-```{r}
 get_data <- function(dir){
   df <- read.csv(paste0(dir, 'HR_comma_sep_2.csv'))
   df <- df %>% filter(salary != 'medium')
@@ -114,32 +88,27 @@ visualize <- function(df){
   geom_point()
   return(plt)
 }
-```
-
-## Run evaluation
-
-```{r, message=FALSE}
-library(dplyr)
-library(ggplot2)
 
 DIR <- '/Users/josiahdavis/Documents/Berkeley/PH252D/data/' # <= UPDATE AS NEEDED
 
 # Read in data
 d <- get_data(DIR)
-
-# Count the results over a range of k values
-raw_results <- count_over_k(d)
-
-# Format results to make it easier to visualize
-results <- format_df(raw_results)
-
-# Create the data visusalizeion
-visualize(results)
 ```
 
-## Other
+# Data Description
 
-```{r, message=FALSE}
+There are eight covariates $W$ in the data which are discussed and visualized below. The goal of this document is to select the number of buckets $k$ to use for approximating the quantitative variables contained in $W$. The objective is to maximize the amount of information contained in the approximated variables while removing a minimal amount of observations due to violations of the positivity assumption.
+
+* `satisfaction_level`
+* `last_evaluation`
+* `number_project`
+* `average_montly_hours`
+* `time_spend_company`
+* `Work_accident`
+* `promotion_last_5years`
+* `sales`
+
+```{r, message=FALSE, echo=FALSE}
 library(reshape2)
 # Generate an exploratory graphic to illustrate how 
 # variables are distributed
@@ -151,5 +120,53 @@ de <- melt(d, id.vars = c('subject', 'salary')
                               , 'promotion_last_5years', 'sales_int'))
 ggplot(de, aes(x = value, fill = salary)) + 
   geom_histogram() + 
+  labs(title = 'Observed Data Distribution of W and A') + 
   facet_wrap(~variable, scales = 'free')
 ```
+
+**Observations**   
+* Promotions as well as work accidents are rare at this company.  
+* Some quantitative variables are discrete (e.g., `number_project`) and some are continuous (e.g., `satisfaction_level`)
+
+\newpage
+# Approach
+
+There are three continuous quantitative variables. Quantiles are used to split the variables into buckets of $k = 2, 3, ... , 10$.  
+* `satisfaction_level`  
+* `last_evaluation ` 
+* `average_montly_hours`  
+
+There are two discrete quantitative variables. Quantiles are used to split them into buckets of $k = 2, 3$.  
+* `number_project` 
+* `time_spend_company`  
+
+There are three variables that are not quantitative This because they are already binary or becuase they have no natural ordering:  
+* `Work_accident`  
+* `promotion_last_5years`  
+* `sales`  
+
+The Percentage of observations that are dropped are calculated for each value fo $k$ for each of the variables.
+
+\newpage
+
+# Results
+
+```{r, echo = FALSE}
+# Count the results over a range of k values
+raw_results <- count_over_k(d)
+
+# Format results to make it easier to visualize
+results <- format_df(raw_results)
+
+# Create the data visusalizeion
+visualize(results)
+```
+
+**Observations**  
+* Approximately 10% of the observations are lost if using dichotomous approximations for all quantitative variables  
+* Approximately 33% of the observations are lost if using trichotomous approximations for all continuous variables and dichotomous approximations for quantitative discrete variables  
+* Approximately 45% of the observations are lost if using trichotomous approximations for all quantitative variables
+
+# Conclusion
+
+So as to miminize the amount of observations lost due to violations of the positivity assumption, it is recommended that quantitative variables are transformed into dichotomous approximations ($k=2$).
