@@ -1,7 +1,7 @@
 ---
 title: "Positivity Assumption Evaluation"
 author: "Josiah Davis"
-date: "4/12/2017"
+date: "4/17/2017"
 output: pdf_document
 ---
 
@@ -27,16 +27,12 @@ count_drop_outs <- function(df, k_disc = 2, k_cont = 2){
   
   n_pos_viol <- df %>% 
   mutate(
-    satisfaction_level_s = split_var(satisfaction_level, k_cont)
-    , last_evaluation_s = split_var(last_evaluation, k_cont)
-    , number_project_s = split_var(number_project, k_disc)
+    number_project_s = split_var(number_project, k_disc)
     , average_montly_hours_s = split_var(average_montly_hours, k_cont)
     , time_spend_company_s = split_var(time_spend_company, k_disc)
   ) %>% 
   group_by(
-    satisfaction_level_s
-    , last_evaluation_s
-    , number_project_s
+    number_project_s
     , average_montly_hours_s
     , time_spend_company_s
     , Work_accident
@@ -81,11 +77,13 @@ visualize <- function(df){
                            , group = k_discrete 
                            , color = k_discrete)) + 
   geom_line() + 
-  scale_y_continuous(breaks = seq(0, 1, by = .1)) + 
+  scale_y_continuous(breaks = seq(0, .35, by = .1), limits = c(0, 0.35)) + 
   labs(y = 'Percent of Observations Dropped'
        , title = 'Evaluation of the Positivity Assumption'
        , subtitle = '% of dropped observation for different numbers of buckets k') + 
-  geom_point()
+  geom_point()  + 
+  scale_color_brewer(type = 'qual', palette = 'Set2')
+  
   return(plt)
 }
 
@@ -115,27 +113,27 @@ library(reshape2)
 d$subject <- 1:nrow(d)
 d$sales_int <- as.integer(d$sales)
 de <- melt(d, id.vars = c('subject', 'salary')
-           , measure.vars = c('satisfaction_level', 'last_evaluation', 'number_project'
+           , measure.vars = c('number_project', 'satisfaction_level', 'last_evaluation'
                               , 'average_montly_hours', 'time_spend_company', 'Work_accident'
                               , 'promotion_last_5years', 'sales_int'))
 ggplot(de, aes(x = value, fill = salary)) + 
   geom_histogram() + 
-  labs(title = 'Observed Data Distribution of W and A', x = '', y = 'Count of Observations') + 
+  labs(title = 'Summary of covariates and treatment'
+       , subtitle = 'Observed marginal data distributions for covariates and treatment'
+       , x = '', y = 'Count of Observations') + 
+  scale_fill_brewer(type = 'qual', palette = 'Set1') + 
   facet_wrap(~variable, scales = 'free')
 ```
 
 **Observations**   
 
 * Promotions as well as work accidents are rare at this company.  
-* Some quantitative variables are discrete (e.g., `number_project`) and some are continuous (e.g., `satisfaction_level`)
+* Some quantitative variables are discrete (e.g., `number_project`) and some are continuous (e.g., `average_montly_hours`)
 
-\newpage
 # Approach
 
-There are three continuous quantitative variables. Quantiles are used to approximate the variables using buckets of size $k = 2, 3, ... , 10$: 
+There is one continuous quantitative variable that is not a mediator variable. Quantiles are used to approximate this variable using buckets of size $k = 2, 3, ... , 10$: 
 
-* `satisfaction_level`
-* `last_evaluation ` 
 * `average_montly_hours`  
 
 There are two discrete quantitative variables. Quantiles are used to approximate the variables using buckets of size $k = 2, 3$:
@@ -143,15 +141,18 @@ There are two discrete quantitative variables. Quantiles are used to approximate
 * `number_project` 
 * `time_spend_company`  
 
-There are three variables that are not approximated. This because they are already binary or becuase they have no natural ordering: 
+There are three variables that are not approximated because they are already binary or becuase they are categories with no natural ordering: 
 
 * `Work_accident` 
 * `promotion_last_5years` 
 * `sales` 
 
-The Percentage of observations that are dropped are calculated for each value fo $k$ for each of the variables.
+There are three variables that are not approximated because they are mediator variables in our causal graph. This is because we do not need to satisfy the positivity assumption for variables that we are not conditioning on for the G-computation formula.
 
-\newpage
+* `satisfaction_level`
+* `last_evaluation`
+
+The percentage of observations that are dropped are calculated for each value fo $k$ for each of the variables.
 
 # Results
 
@@ -168,10 +169,9 @@ visualize(results)
 
 **Observations**  
 
-* Approximately 10% of the observations are lost if using dichotomous approximations for all quantitative variables 
-* Approximately 33% of the observations are lost if using trichotomous approximations for all continuous variables and dichotomous approximations for quantitative discrete variables 
-* Approximately 45% of the observations are lost if using trichotomous approximations for all quantitative variables
+* Only **3%** of the observations are lost if quantitative variables are approximated with $k=2$ buckets 
+* Approximately **8%** of the observations are lost if continuous variables are approximated with $k=5$ buckets and quantitative discrete variables are approximated with $k=2$ buckets.
+* Approximately **30%** of the observations are lost if continuous variables are approximated with $k=10$ buckets and quantitative discrete variables are approximated with $k=3$ buckets.
 
 # Conclusion
-
-So as to miminize the amount of observations lost due to violations of the positivity assumption, it is recommended that quantitative variables are transformed into dichotomous approximations ($k=2$).
+So as to miminize the amount of observations lost due to violations of the positivity assumption, while also retaining information from the continuous variables it is recommended that continous variables approimated with no more than $k=5$ buckets  and that discrete quantitative variables are approximated with $k=2$ buckets.
