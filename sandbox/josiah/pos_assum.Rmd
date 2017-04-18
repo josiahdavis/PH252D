@@ -175,3 +175,7 @@ visualize(results)
 
 # Conclusion
 So as to miminize the amount of observations lost due to violations of the positivity assumption, while also retaining information from the continuous variables it is recommended that continous variables approimated with no more than $k=5$ buckets  and that discrete quantitative variables are approximated with $k=2$ buckets.
+
+# References
+
+1. Maya Petersen, K E Porter, S Gruber, Y Wang, et al.. "Diagnosing and responding to violations in the positivity assumption." Statistical Methods in Medical Research Vol. 21 Iss. 1 (2012)
