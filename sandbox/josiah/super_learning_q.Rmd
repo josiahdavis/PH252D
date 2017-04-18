@@ -64,19 +64,15 @@ format_data <- function(df){
   # Approximate all five quantitative variables as dichotomous variables
   df <- df %>% 
     mutate(
-      satisfaction_level = bucket_covariate(satisfaction_level, 2)
-      , last_evaluation = bucket_covariate(last_evaluation, 2)
-      , number_project = bucket_covariate(number_project, 2)
-      , average_montly_hours = bucket_covariate(average_montly_hours, 2)
+      number_project = bucket_covariate(number_project, 2)
+      , average_montly_hours = bucket_covariate(average_montly_hours, 5)
       , time_spend_company = bucket_covariate(time_spend_company, 2)
     )
   
   # Check for violations of the positivity assumption
   df <- df %>% 
   group_by(
-    satisfaction_level
-    , last_evaluation
-    , number_project
+    number_project
     , average_montly_hours
     , time_spend_company
     , Work_accident
@@ -107,7 +103,9 @@ format_data <- function(df){
   df <- df %>% dplyr::select(-both_treatments, -sales)
   
   # Create attribute to store columns
-  attr(df, 'x_cols') <- df %>% dplyr::select(-left) %>% colnames()
+  attr(df, 'x_cols') <- df %>% 
+    dplyr::select(-left, -satisfaction_level, -last_evaluation) %>% 
+    colnames()
   
   return(df)
 }
@@ -124,13 +122,14 @@ get_super_learner <- function(df, learning_library){
 
   
   # Set treatment to 0, 1 for generating the counterfactual outcomes
-  X_0 <- df[,attr(df, 'x_cols')] %>% mutate(salary = 0)
-  X_1 <- df[,attr(df, 'x_cols')] %>% mutate(salary = 1)
+  X <-  df[,attr(df, 'x_cols')]
+  X_0 <- X %>% mutate(salary = 0)
+  X_1 <- X %>% mutate(salary = 1)
   
   # Run Super Learner
   model <- SuperLearner(Y = df$left
                         , X = df[,attr(df, 'x_cols')]
-                        , newX = rbind(X_0, X_1)     # Note: this data is not used for training
+                        , newX = rbind(X, X_0, X_1)     # Note: this data is not used for training
                         , SL.library = learning_library
                         , cvControl = list(V = 5)
                         , family = 'binomial'
@@ -155,9 +154,9 @@ get_counterfact_outcomes <- function(df, model){
   #   model object with predictions, and other results (e.g., cvRisk)
 
   
-  # 
-  df$Y_0 <- model$SL.predict[1:nrow(df)]
-  df$Y_1 <- model$SL.predict[(nrow(df)+1):(2*nrow(df))]
+  df$Y_A <- model$SL.predict[1:nrow(df)]
+  df$Y_0 <- model$SL.predict[(nrow(df)+1):(2*nrow(df))]
+  df$Y_1 <- model$SL.predict[(2*nrow(df)+1):(3*nrow(df))]
   
   return(df)
 }
