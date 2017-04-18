@@ -15,7 +15,6 @@ rm(list = ls()); gc()
 set.seed(5000)
 ```
 
-
 ## Define convenience functions
 ```{r, message=FALSE}
 get_data <- function(dir, file_in){
