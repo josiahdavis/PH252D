@@ -2,7 +2,10 @@
 title: "An evaluation of various ATE estimators through Non-parametric bootstrapping"
 author: "Josiah Davis"
 date: "4/28/2017"
-output: pdf_document
+output: 
+  pdf_document:
+    fig_width: 6
+    fig_height: 6
 ---
 
 ## Define Functions
@@ -188,7 +191,7 @@ visualize_boot <- function(est, ci){
     labs(title = expression(paste('Comparison of Estimators '
                                   , hat(Psi)(P[n])
                                   , ' using Non-parametric Bootstrap'))
-         , x = expression(hat(Psi)(P[boot]))
+         , x = expression(hat(Psi)(P[n]^b))
          , y = '')
   return(plt)
 }
@@ -210,10 +213,12 @@ PSI_LABS <- c('hat(Psi)[SSE](P[n]^b)', 'hat(Psi)[IPTW](P[n]^b)', 'hat(Psi)[IPTW.
 
 ## Run everything
 
-```{r}
+```{r, warning=FALSE, message=FALSE, fig.align='center'}
 library(reshape2)
 library(ggplot2)
 library(dplyr)
+
+set.seed(505)
 
 # Get the data
 d <- get_data(DIR, FILE_IN_NAME)
@@ -228,6 +233,6 @@ cis <- rbind(calc_ci(estimators, 'Normal'), calc_ci(estimators, 'Quantile'))
 visualize_boot(estimators, cis)
 
 # Write to file
-cis %>% select(-variable) %>% write.csv(paste0(DIR, 'confidence_intervals.csv'), row.names = FALSE)
+cis %>% select(-variable) %>% write.csv(paste0(DIR, FILE_OUT_NAME), row.names = FALSE)
 ```
 
