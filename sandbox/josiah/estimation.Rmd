@@ -25,6 +25,21 @@ get_data <- function(dir, file_in){
   return(df)
 }
 
+bucket_covariate <- function(x, k){
+  # Approximate a single quantitative variable based off of the quantiles
+  # 
+  # Args:
+  #   x: The quantitative vector to be approximated
+  #   k: The number of quantiles to use in the approximation
+  # 
+  # Returns:
+  #   Numeric vector with numbers corresponding to quantiles (e.g., 1 = 1st quantile)
+  
+  x_split <- cut(x, breaks = quantile(x, probs = seq(0, 1, 1/k)), include.lowest = TRUE)
+  if(any(is.na(x_split))) stop('There are NA values in')
+  return(as.numeric(factor(x_split, labels = 1:k)))
+}
+
 calc_sse <- function(df){
   # Calculate the simple substitution estimator
   # 
@@ -98,7 +113,7 @@ calc_tmle <- function(df){
 }
 
 calc_ci <- function(m, method){
-  # Calculate a confidence interval using a normality assumption
+  # Calculate a confidence interval using either normality assumption or quantile method
   # 
   # Args:
   #   m: Matrix with bootstrapped iterations across rows and estimators across columns
@@ -109,20 +124,20 @@ calc_ci <- function(m, method){
   
   if(method == 'Normal'){
     cis <- apply(m, 2, function(x){ 
-      mean(x) + c(-1.96 * sqrt(var(x)), 1.96 * sqrt(var(x)))
+      c(sqrt(var(x)), mean(x) + c(-1.96 * sqrt(var(x)), 1.96 * sqrt(var(x))))
     })
   }else if(method == 'Quantile'){
     cis <- apply(m, 2, function(x){
-      quantile(x, c(0.025, 0.975))
+      c(sqrt(var(x)), quantile(x, c(0.025, 0.975)))
     })
   }
   cis <- data.frame(t(cis))
-  colnames(cis) <- c('lower', 'upper')
+  colnames(cis) <- c('SE', 'lower', 'upper')
   cis$method <- rep(method, 4)
   cis$estimator <- c('SSE', 'IPTW', 'IPTW.ST', 'TMLE')
   cis$coverage <- cis$upper - cis$lower
   cis$variable <- factor(cis$estimator, levels = c('SSE', 'IPTW', 'IPTW.ST', 'TMLE'), labels = PSI_LABS)
-  return(cis[,c('estimator', 'lower', 'upper', 'coverage', 'method', 'variable')])
+  return(cis[,c('estimator','SE', 'lower', 'upper', 'coverage', 'method', 'variable')])
 }
 
 run_boot <- function(df, n_boot){
@@ -187,7 +202,8 @@ visualize_boot <- function(est, ci){
     geom_vline(data = ci, aes(xintercept = upper, linetype = method)) +
     facet_wrap(~variable, ncol = 1, labeller = label_parsed)  +
     scale_fill_manual(values = PSI_COLS[1:4], guide=FALSE) +
-    theme(legend.title=element_blank()) +
+    theme(legend.title=element_blank()
+          , strip.background = element_blank()) +
     labs(title = expression(paste('Comparison of Estimators '
                                   , hat(Psi)(P[n])
                                   , ' using Non-parametric Bootstrap'))
@@ -196,6 +212,46 @@ visualize_boot <- function(est, ci){
   return(plt)
 }
 
+```
+
+
+```{r}
+
+calc_pss <- function(df){
+  # Calculate the Average Treatment Effect through Propensity Score Stratification
+  # 
+  # Args:
+  #   df: data-frame containing the conditional probabiliy of leaving under both exposures
+  # 
+  # Returns:
+  #   The average treatement effect using Propensity Score Stratification
+  
+  # Split the propensity score into 5 buckets
+  d$g_hat_AW_k <- bucket_covariate(d$g_hat_AW, 5)
+  
+  n <- nrow(d)
+  
+  # Calculate the proportion of units in each stratum k
+  d %>% group_by(g_hat_AW_k) %>% 
+    summarise(
+      n_1 = sum(salary == 1)
+      , n_0 = sum(salary == 0)
+      , pi_hat_k = n() / n
+      , tau_hat_k = mean(Q_bar_1W) - mean(Q_bar_0W)
+    )
+  
+  d %>% filter(g_hat_AW_k == 5) %>% select(salary, left) %>%  summary()
+  
+  ggplot(d, aes(x = g_hat_AW, fill = factor(salary))) + 
+    geom_histogram()
+  
+  # Calculate the the difference in means for each stratum
+  summary(d$g_hat_AW)
+  
+  # Substitute the updated fits into the target parameter mapping:
+  tau_hat <- 
+  return(tau_hat)
+}
 ```
 
 ## Define Constants
@@ -226,13 +282,24 @@ d <- get_data(DIR, FILE_IN_NAME)
 # Run the bootstrapping
 estimators <- run_boot(d, 500)
 
+# Calculate the point estimates
+pes <- data.frame(estimator = c("SSE", "IPTW", "IPTW.ST", "TMLE")
+                  , point_estimate = c(calc_sse(d), calc_iptw(d), calc_iptw_stable(d), calc_tmle(d)))
+
 # Calculate the confidence intervals
-cis <- rbind(calc_ci(estimators, 'Normal'), calc_ci(estimators, 'Quantile'))
+normal_ci <- calc_ci(estimators, 'Normal')
+quantile_ci <- calc_ci(estimators, 'Quantile')
+cis <- rbind(normal_ci, quantile_ci)
+
+# Calculate the p values (Normal Only)
+results <- cis %>% 
+  left_join(pes) %>% 
+  mutate(p_value = ifelse(method == 'Normal', 2 * pnorm( abs(point_estimate) / SE, lower.tail=FALSE), NA))
 
 # Visualize the densities
-visualize_boot(estimators, cis)
+visualize_boot(estimators, results)
 
-# Write to file
-cis %>% select(-variable) %>% write.csv(paste0(DIR, FILE_OUT_NAME), row.names = FALSE)
+# Write confidence intervals and p-values to file
+#results %>% select(-variable) %>% write.csv(paste0(DIR, FILE_OUT_NAME), row.names = FALSE)
 ```
 
