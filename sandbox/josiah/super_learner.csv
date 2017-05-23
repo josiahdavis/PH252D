@@ -1,0 +1,1 @@
+,Risk,CoefficientGLM,0.17,0Ridge,0.17,0LASSO,0.17,0GAM,0.15,0Gradient Boosted Trees,0.11,0.45Random Forest,0.12,0CART,0.11,0.03Polymars,0.11,0.35mean,0.2,0Neural Net (2),0.24,0.04Neural Net (3),0.16,0.01Neural Net (4),0.15,0Neural Net (5),0.21,0Neural Net (6),0.15,0.01KNN (10),0.11,0.09KNN (15),0.11,0.02KNN (20),0.12,0KNN (25),0.12,0
