@@ -8,6 +8,7 @@ output:
 ---
 
 ## Set up working environment
+
 ```{r, message=FALSE, warning=FALSE}
 library(dplyr)
 library(SuperLearner)
@@ -16,6 +17,7 @@ set.seed(5000)
 ```
 
 ## Define convenience functions
+
 ```{r, message=FALSE}
 get_data <- function(dir, file_in){
   # Get the HR data in data-frame format
@@ -147,10 +149,10 @@ get_counterfact_outcomes <- function(df, model){
   # 
   # Args:
   #   df: observed data as a data-frame
-  #   model: observed data as a data-frame
+  #   model: super learnerer predicting the probability of outcome (i.e., leaving company)
   # 
   # Returns:
-  #   model object with predictions, and other results (e.g., cvRisk)
+  #   data-frame with predictions, and other results (e.g., cvRisk)
 
   
   df$Q_bar_AW <- model$SL.predict[1:nrow(df)]
@@ -160,33 +162,54 @@ get_counterfact_outcomes <- function(df, model){
   return(df)
 }
 
-save_output <- function(df, model, dir, out_name, save_model = TRUE){
+get_treatment_mechanism <- function(df, model){
+  # Retreive g_aw the treatment probability given covariates
+  # 
+  # Args:
+  #   df: observed with covariates data as a data-frame
+  #   model: super learner predicting the probabability of treatment (i.e., high salary)
+  # 
+  # Returns:
+  #   data-frame with treatment mechanisms
+  
+  g_hat1_W <- model$SL.predict
+  g_hat0_W <- 1 - g_hat1_W
+  g_hat_AW <- rep(NA, nrow(obs_data))
+  g_hat_AW[obs_data$salary==1] <- g_hat1_W[obs_data$salary==1]
+  g_hat_AW[obs_data$salary==0] <- g_hat0_W[obs_data$salary==0]
+  df$g_hat_AW <- g_hat_AW
+  return(df)
+}
+
+save_output <- function(df, q_model, g_model, dir, save_model = TRUE){
   # Write counterfactual outcomes, model summary results to local disk
   # 
   # Args:
   #   df: observed data as a data-frame
-  #   model: observed data as a data-frame
+  #   q_model: super learning object for estimating the conditional probability
+  #   g_model: super learning object for estimating the treatment mechanism
   #   dir: working directory as character vector
-  #   out_name: name of output file with counterfactual outcomes as character vector
-  #   save_model: Whether or not to save the full model as binary value
+  #   save_model: whether or not to save the full model
   # 
   # Returns:
   #   Nothing to the R environment
    
   # 1. Write dataframe containing counterfactual outcomes to csv
-  df %>% write.csv(paste0(dir, out_name), row.names = FALSE)
+  df %>% write.csv(paste0(dir, 'results.csv'), row.names = FALSE)
   
-  # 2. Save some modeling results
-  model_summary <- list(
-    risk = model$cvRisk
-    , coefficients = model$coef
-    , times = model$times
-    )
-  saveRDS(model_summary, paste0(dir, 'SL_summary'))
+  # 2. Save modeling results for conditional probability
+  cbind(Risk = q_model$cvRisk, Coef = q_model$coef) %>% 
+    write.csv(paste0(DIR, 'sl_summary_q.csv'), row.names = TRUE)
+  
+  # 3. Save modeling results for treatment mechanism
+  cbind(Risk = g_model$cvRisk, Coef = g_model$coef) %>% 
+    write.csv(paste0(DIR, 'sl_summary_g.csv'), row.names = TRUE)
 
-  # 3. Save full (large) super learning object
-  if(save_model) saveRDS(model, paste0(dir, 'SL_full.rds'))
-  
+  # 4. Save the model objects themselves
+  if(save_model){
+      saveRDS(q_model, paste0(dir, 'SL_full_q.rds'))
+      saveRDS(g_model, paste0(dir, 'SL_full_g.rds'))
+  }
 }
 
 ```
@@ -256,75 +279,30 @@ SL_LIBRARY <- c(
 
 DIR <- '/Users/josiahdavis/Documents/Berkeley/PH252D/data/' # <= UPDATE AS NEEDED
 FILE_IN_NAME <- 'HR_comma_sep_2.csv'
-FILE_OUT_NAME <- 'SL_output_2.csv'
 ```
 
-## Estimate $Q_0(A,W)$
+## Run Everything
+
 ```{r, message=FALSE}
+# Read data into memory
+obs_data <- get_data(DIR, FILE_IN_NAME)
 
 # Preprocess data including bucketing
-obs_data <- get_data(DIR, FILE_IN_NAME)
 obs_data <- pre_process_data(obs_data)
 
-# Estimate Q_0(A,W)
+# Estimate Probability of Leaving $Q_0(A,W)$
 q_hat_sl <- get_super_learner(obs_data, SL_LIBRARY)
-
-print.SuperLearner
-
-sl_summary <- data.frame(algorithm = names(q_hat_sl$cvRisk)
-           , cvrisk = q_hat_sl$cvRisk
-           , coefficient = q_hat_sl$coef)
-
-# Estimate the risk for the super learner
-cv_q_hat_sl <- CV.SuperLearner(Y=obs_data$left
-                               , X=obs_data[,attr(obs_data, 'x_cols')]
-                               , SL.library=SL_LIBRARY
-                               , family='binomial'
-                               , innerCvControl=list(V=10)
-                               , cvControl=list(V=10))
 
 # Calculate counterfactual outcomes
 results <- get_counterfact_outcomes(obs_data, q_hat_sl)
-```
 
-
-## Estimate the treatment mechanisim: $g_0(A|W)$
-```{r, eval=FALSE}
 # Estimate propensity of treatment g_0(A|W)
-g_hat_sl<- SuperLearner(Y=obs_data$salary, X=obs_data[,attr(obs_data, 'x_cols')] %>% select(-salary)
-                      , SL.library=SL_LIBRARY, family="binomial")
+g_hat_sl<- SuperLearner(Y=obs_data$salary
+                        , X=obs_data[,attr(obs_data, 'x_cols')] %>% select(-salary)
+                        , SL.library=SL_LIBRARY, family="binomial")
 
-g_hat1_W <- g_hat_sl$SL.predict
-g_hat0_W <- 1 - g_hat1_W
-g_hat_AW <- rep(NA, nrow(obs_data))
-g_hat_AW[obs_data$salary==1] <- g_hat1_W[obs_data$salary==1]
-g_hat_AW[obs_data$salary==0] <- g_hat0_W[obs_data$salary==0]
-results$g_hat_AW <- g_hat_AW
+results <- get_treatment_mechanism(results, g_hat_sl)
 
-head(results)
+# Save results
+save_output(results, q_hat_sl, g_hat_sl, DIR)
 ```
-
-
-## Save results
-```{r, eval=FALSE}
-
-cv_q_hat_sl$times
-
-# Predictions and super learner object
-save_output(results, q_hat_sl, DIR, FILE_OUT_NAME)
-
-# Super Learning results
-cbind(Risk = q_hat_sl$cvRisk, Coef = q_hat_sl$coef) %>% write.csv(paste0(DIR, 'sl_summary.csv'), row.names = FALSE)
-
-# CV Super Learning results
-summary(cv_q_hat_sl)$Table %>% write.csv(paste0(DIR, 'sl_cv_summary.csv'), row.names = FALSE)
-
-cbind(Risk = q_hat_sl$cvRisk, Coef = q_hat_sl$coef)
-summary(cv_q_hat_sl)$Table$Ave 
-
-risk <- data.frame(cbind(Risk = q_hat_sl$cvRisk, Coef = q_hat_sl$coef))
-risk$Algorithm <- as.factor(row.names(risk))
-cvrisk <- data.frame(summary(cv_q_hat_sl)$Table)
-```
-
-
